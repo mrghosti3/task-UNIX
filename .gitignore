@@ -1,0 +1,13 @@
+# output
+bin
+**/*.html
+
+# external
+src/libs
+src/test.c
+
+# testdata
+**/*.txt
+
+# IDE
+Session.vim
