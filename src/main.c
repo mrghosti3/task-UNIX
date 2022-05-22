@@ -16,6 +16,7 @@
 struct student {
     char *name;
     size_t nlen;
+    XXH64_hash_t hash;
     SLIST_ENTRY(student) classmates;
 };
 
@@ -36,6 +37,7 @@ struct student* create_student(char *buff, size_t i, size_t off)
 
     memcpy(s->name, buff + off, s->nlen);
     s->name[s->nlen - 1] = 0;
+    s->hash = XXH64(s->name, s->nlen, 0);
     return s;
 }
 
