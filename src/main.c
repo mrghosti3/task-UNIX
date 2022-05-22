@@ -7,7 +7,7 @@
 #include <string.h>
 
 #include "libs/queue.h"
-#include "libs/tree.h"
+#include "libs/tree.h" // TODO: implement tree usage
 #define XXH_INLINE_ALL
 #include "libs/xxhash.h"
 
@@ -80,13 +80,10 @@ struct slist_stud* instantiate_slist(const char *fname)
 }
 
 void free_slist(struct slist_stud *head) {
-    int i = 0;
-
     while (!SLIST_EMPTY(head))
     {
         struct student *s = SLIST_FIRST(head);
         SLIST_REMOVE_HEAD(head, classmates);
-        printf("OUTPUT: i %d len %zu '%s'\n", i++, s->nlen, s->name);
         free(s->name);
         free(s);
     }
@@ -102,6 +99,13 @@ int main(int argc, char *argv[])
     else if (SLIST_EMPTY(snames)) {
         free(snames);
         _exit(EXIT_FAILURE);
+    }
+
+    int i = 0;
+    struct student *el;
+    SLIST_FOREACH(el, snames, classmates)
+    {
+        printf("OUTPUT: i %d len %zu '%s' '%zu'\n", i++, el->nlen, el->name, el->hash);
     }
 
     free_slist(snames);
