@@ -1,15 +1,16 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <sys/mman.h>
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "libs/queue.h"
-#include "libs/tree.h" // TODO: implement tree usage
 #define XXH_INLINE_ALL
 #include "libs/xxhash.h"
+#include "libs/tree.h" // TODO: implement tree usage
 
 #define MEM_ALLOC_FAIL_RET(ptr, ret) if (ptr == NULL) return ret
 
@@ -50,7 +51,7 @@ struct slist_stud* instantiate_slist(const char *fname)
 
     if (fstat(fd, &fst)) return NULL;
 
-    char *buff = malloc(fst.st_size);
+    char *buff = mmap(NULL, fst.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
     MEM_ALLOC_FAIL_RET(buff, NULL);
     read(fd, buff, fst.st_size);
     close(fd);
@@ -74,7 +75,7 @@ struct slist_stud* instantiate_slist(const char *fname)
         off = i;
         ps = s;
     }
-    free(buff);
+    munmap(buff, fst.st_size);
 
     return head;
 }
