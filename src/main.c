@@ -15,11 +15,10 @@
 // queue.h Integrations
 
 // NOTE: may be better to use student struct as entry on SLIST_ENTRY
-// FIX: implement double-hashing for hash collision resolution
 struct student {
     char *name;
     size_t nlen;
-    XXH64_hash_t hash;
+    XXH64_hash_t h1, h2;
     SLIST_ENTRY(student) classmates;
 };
 
@@ -27,48 +26,50 @@ SLIST_HEAD(slist_stud, student);
 
 struct student new_student(char *name, size_t len)
 {
-    struct student s = { name, len, XXH64(name, len, 0), {NULL} };
+    XXH64_hash_t h1 = XXH64(name, len, 0),
+                 h2 = 1 + XXH64(name, len, 0) % len;
+    struct student s = { name, len, h1, h2, {NULL} };
     return s;
 }
 
-struct student* create_student(char *buff, size_t i, size_t off)
+struct student* stud_from_text(char *buff, size_t i, size_t off)
 {
-    struct student *s = malloc(sizeof(struct student));
-    if (s == NULL) return NULL;
+    size_t len = i - off;
+    char *name = malloc(len);
+    if (name == NULL) return NULL;
 
-    s->nlen = i - off;
-    s->name = malloc(s->nlen);
-    if (s->name == NULL)
+    memcpy(name, buff + off, len);
+    name[len - 1] = 0; // makes sure that string ends with '\0'
+
+    struct student *s = malloc(sizeof(struct student));
+    if (s == NULL)
     {
-        free(s);
+        free(name);
         return NULL;
     }
 
-    memcpy(s->name, buff + off, s->nlen);
-    s->name[s->nlen - 1] = 0;
-    s->hash = XXH64(s->name, s->nlen, 0);
+    *s = new_student(name, len);
     return s;
 }
 
-struct slist_stud* instantiate_slist(const char *fname)
+struct slist_stud instantiate_slist(const char *fname)
 {
+    struct slist_stud head = SLIST_HEAD_INITIALIZER(&head);
+
     int fd = open(fname, O_RDONLY);
-    if (fd < 0) return NULL;
+    if (fd < 0) goto ret;
 
     struct stat fst;
 
-    if (fstat(fd, &fst)) return NULL;
+    if (fstat(fd, &fst)) goto ret;
 
     char *buff = mmap(NULL, fst.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
-    if (buff == MAP_FAILED) return NULL;
+    if (buff == MAP_FAILED) goto ret;
 
     read(fd, buff, fst.st_size);
     close(fd);
 
-    struct slist_stud *head = malloc(sizeof(struct slist_stud));
-    if (head == NULL) return NULL;
-
-    SLIST_INIT(head);
+    SLIST_INIT(&head);
 
     size_t off = 0;
     struct student *ps;
@@ -77,21 +78,21 @@ struct slist_stud* instantiate_slist(const char *fname)
     {
         if (buff[i] != '\n') continue;
 
-        struct student *s = create_student(buff, ++i, off);
+        struct student *s = stud_from_text(buff, ++i, off);
         if (s == NULL) continue;
 
-        SLIST_INSERT_HEAD(head, s, classmates);
+        SLIST_INSERT_HEAD(&head, s, classmates);
 
         off = i;
         ps = s;
     }
     munmap(buff, fst.st_size);
 
-    return head;
+    ret: return head;
 }
 
 void print_stud(struct student *s) {
-    printf("Student: hash '%lx' len %zu '%s' \n", s->hash, s->nlen, s->name);
+    printf("Student: h1 '%lx' h2 '%3lx' len %zu '%s' \n", s->h1, s->h2, s->nlen, s->name);
 }
 
 void print_slist(struct slist_stud *snames)
@@ -103,6 +104,8 @@ void print_slist(struct slist_stud *snames)
         printf("%d ", i++);
         print_stud(el);
     }
+
+    printf("\n");
 }
 
 void free_slist_items(struct slist_stud *head) {
@@ -124,18 +127,20 @@ struct node {
 
 int studcmp(struct node *n1, struct node *n2)
 {
-    return (n1->s->hash < n2->s->hash ? -1 : n1->s->hash > n2->s->hash);
+    struct student *s1 = n1->s,
+                   *s2 = n2->s;
+    if (s1->h1 != s2->h1) return s1->h1 < s2->h1 ? -1 : 1;
+
+    return (s1->h2 < s2->h2 ? -1 : s1->h2 > s2->h2);
 }
 
 RB_HEAD(studtree, node);
 RB_PROTOTYPE(studtree, node, entry, studcmp);
 RB_GENERATE(studtree, node, entry, studcmp);
 
-struct studtree* instantiate_tree(struct slist_stud *snames)
+struct studtree instantiate_tree(struct slist_stud *snames)
 {
-    struct studtree *head = malloc(sizeof(struct studtree));
-
-    if (head == NULL) return NULL;
+    struct studtree head = RB_INITIALIZER(root);
 
     struct node *n;
     struct student *s;
@@ -147,7 +152,7 @@ struct studtree* instantiate_tree(struct slist_stud *snames)
         }
 
         n->s = s;
-        RB_INSERT(studtree, head, n);
+        RB_INSERT(studtree, &head, n);
     }
 
     return head;
@@ -173,6 +178,8 @@ void traverse(struct studtree *stree)
     {
         print_stud(n->s);
     }
+
+    printf("\n");
 }
 
 void free_tree_nodes(struct studtree *stree) {
@@ -191,47 +198,32 @@ int main(int argc, char *argv[])
     if (argc > 2) return -1;
 
     // SLIST creation
-    struct slist_stud *snames = instantiate_slist(argv[1]);
+    struct slist_stud snames = instantiate_slist(argv[1]);
 
-    if (snames == NULL) _exit(EXIT_FAILURE);
-    else if (SLIST_EMPTY(snames))
-    {
-        free(snames);
-        _exit(EXIT_FAILURE);
-    }
+    if (SLIST_EMPTY(&snames)) _exit(EXIT_FAILURE);
 
     // SLIST test
-    print_slist(snames);
+    print_slist(&snames);
 
     // tree creation
-    struct studtree *stree = instantiate_tree(snames);
+    struct studtree stree = instantiate_tree(&snames);
 
-    if (stree == NULL) {
-        free_slist_items(snames);
-        free(snames);
-        _exit(EXIT_FAILURE);
-    }
-    else if (RB_EMPTY(stree))
+    if (RB_EMPTY(&stree))
     {
-        free_slist_items(snames);
-        free(snames);
-        free(stree);
+        free_slist_items(&snames);
         _exit(EXIT_FAILURE);
     }
 
-    RB_UP(RB_ROOT(stree), entry) = NULL;
-    traverse(stree);
-    printf("\n");
+    RB_UP(RB_ROOT(&stree), entry) = NULL;
+    traverse(&stree);
 
     struct student s = new_student("Arnas Vidžiūnas", 18);
-    struct node *n = search(stree, &s);
-    delete(stree, n);
+    struct node *n = search(&stree, &s);
+    delete(&stree, n);
     free(n);
-    traverse(stree);
+    traverse(&stree);
 
-    free_slist_items(snames);
-    free(snames);
-    free_tree_nodes(stree);
-    free(stree);
+    free_slist_items(&snames);
+    free_tree_nodes(&stree);
     return 0;
 }
