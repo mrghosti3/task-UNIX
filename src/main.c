@@ -25,6 +25,12 @@ struct student {
 
 SLIST_HEAD(slist_stud, student);
 
+struct student new_student(char *name, size_t len)
+{
+    struct student s = { name, len, XXH64(name, len, 0), {NULL} };
+    return s;
+}
+
 struct student* create_student(char *buff, size_t i, size_t off)
 {
     struct student *s = malloc(sizeof(struct student));
@@ -211,6 +217,11 @@ int main(int argc, char *argv[])
     }
 
     RB_UP(RB_ROOT(stree), entry) = NULL;
+    traverse(stree);
+
+    struct student s = new_student("Arnas Vidžiūnas", 18);
+    struct node *n = search(stree, &s);
+    delete(stree, n);
     traverse(stree);
 
     free_slist_items(snames);
