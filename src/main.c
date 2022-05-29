@@ -90,13 +90,18 @@ struct slist_stud* instantiate_slist(const char *fname)
     return head;
 }
 
+void print_stud(struct student *s) {
+    printf("Student: hash '%lx' len %zu '%s' \n", s->hash, s->nlen, s->name);
+}
+
 void print_slist(struct slist_stud *snames)
 {
     int i = 0;
     struct student *el;
     SLIST_FOREACH(el, snames, classmates)
     {
-        printf("OUTPUT: i %d len %zu '%s' '%zu'\n", i++, el->nlen, el->name, el->hash);
+        printf("%d ", i++);
+        print_stud(el);
     }
 }
 
@@ -163,12 +168,10 @@ struct node* delete(struct studtree *stree, struct node *n)
 // FIX: implement tree pretty print
 void traverse(struct studtree *stree)
 {
-    int i = 0;
     struct node *n;
     RB_FOREACH(n, studtree, stree)
     {
-        struct student *el = n->s;
-        printf("OUTPUT: i %d len %zu '%s' '%zu'\n", i++, el->nlen, el->name, el->hash);
+        print_stud(n->s);
     }
 }
 
@@ -218,10 +221,12 @@ int main(int argc, char *argv[])
 
     RB_UP(RB_ROOT(stree), entry) = NULL;
     traverse(stree);
+    printf("\n");
 
     struct student s = new_student("Arnas Vidžiūnas", 18);
     struct node *n = search(stree, &s);
     delete(stree, n);
+    free(n);
     traverse(stree);
 
     free_slist_items(snames);
