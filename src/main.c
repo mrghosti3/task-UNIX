@@ -12,8 +12,9 @@
 #include "libs/xxhash.h"
 #include "libs/tree.h" // TODO: implement tree usage
 
-#define MEM_ALLOC_FAIL_RET(ptr, ret) if (ptr == NULL) return ret
+// queue.h Integrations
 
+// NOTE: may be better to use student struct as entry on SLIST_ENTRY
 struct student {
     char *name;
     size_t nlen;
@@ -52,12 +53,14 @@ struct slist_stud* instantiate_slist(const char *fname)
     if (fstat(fd, &fst)) return NULL;
 
     char *buff = mmap(NULL, fst.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
-    MEM_ALLOC_FAIL_RET(buff, NULL);
+    if (buff == MAP_FAILED) return NULL;
+
     read(fd, buff, fst.st_size);
     close(fd);
 
     struct slist_stud *head = malloc(sizeof(struct slist_stud));
-    MEM_ALLOC_FAIL_RET(head, NULL);
+    if (head == NULL) return NULL;
+
     SLIST_INIT(head);
 
     size_t off = 0;
@@ -97,7 +100,8 @@ int main(int argc, char *argv[])
     struct slist_stud *snames = instantiate_slist(argv[1]);
 
     if (snames == NULL) _exit(EXIT_FAILURE);
-    else if (SLIST_EMPTY(snames)) {
+    else if (SLIST_EMPTY(snames))
+    {
         free(snames);
         _exit(EXIT_FAILURE);
     }
