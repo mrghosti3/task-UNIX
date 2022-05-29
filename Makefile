@@ -18,5 +18,13 @@ gdb: $(BIN)
 mem: $(BIN)
 	valgrind --track-origins=yes --leak-check=full --show-reachable=yes -s ./$(BIN) $(BARG)
 
+ARCHIVE_CMD=git archive --format $@ -o ./task2.$@ main
+
+tgz:
+	$(ARCHIVE_CMD)
+
+zip:
+	$(ARCHIVE_CMD)
+
 clean:
 	rm $(BIN)
