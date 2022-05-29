@@ -11,3 +11,8 @@ src/test.c
 
 # IDE
 Session.vim
+
+# Archives
+**/*.zip
+**/*.tgz
+**/*.tar.gz

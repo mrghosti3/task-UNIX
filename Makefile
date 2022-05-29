@@ -16,7 +16,7 @@ gdb: $(BIN)
 	gdb ./$(BIN)
 
 mem: $(BIN)
-	valgrind --leak-check=full --show-reachable=yes -s ./$(BIN) $(BARG)
+	valgrind --track-origins=yes --leak-check=full --show-reachable=yes -s ./$(BIN) $(BARG)
 
 clean:
 	rm $(BIN)
