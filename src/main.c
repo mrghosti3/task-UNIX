@@ -142,8 +142,20 @@ struct studtree* instantiate_tree(struct slist_stud *snames)
     return head;
 }
 
+struct node* search(struct studtree *stree, struct student *s)
+{
+    struct node lookup = { { NULL }, s };
+
+    return RB_FIND(studtree, stree, &lookup);
+}
+
+struct node* delete(struct studtree *stree, struct node *n)
+{
+    return RB_REMOVE(studtree, stree, n);
+}
+
 // FIX: implement tree pretty print
-void print_tree(struct studtree *stree)
+void traverse(struct studtree *stree)
 {
     int i = 0;
     struct node *n;
@@ -198,7 +210,8 @@ int main(int argc, char *argv[])
         _exit(EXIT_FAILURE);
     }
 
-    print_tree(stree);
+    RB_UP(RB_ROOT(stree), entry) = NULL;
+    traverse(stree);
 
     free_slist_items(snames);
     free(snames);
