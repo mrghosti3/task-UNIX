@@ -1,4 +1,4 @@
-CC=clang-12
+CC=clang
 CFLAGS=-g -Wall
 
 BIN=bin/task2
