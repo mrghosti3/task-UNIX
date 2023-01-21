@@ -24,6 +24,15 @@ struct student {
 
 SLIST_HEAD(slist_stud, student);
 
+void free_slist_items(struct slist_stud *head) {
+  while (!SLIST_EMPTY(head)) {
+    struct student *s = SLIST_FIRST(head);
+    SLIST_REMOVE_HEAD(head, classmates);
+    free(s->name);
+    free(s);
+  }
+}
+
 // FIX: reimplement hash collission resolution to match described in README
 struct student new_student(char *name, size_t len) {
   XXH64_hash_t h1 = XXH64(name, len, 0), h2 = 1 + XXH64(name, len, 0) % len;
@@ -76,8 +85,13 @@ struct slist_stud instantiate_slist(const char *fname) {
       continue;
 
     struct student *s = stud_from_text(buff, ++i, off);
-    if (s == NULL)
-      continue;
+
+    if (s == NULL) {
+      // If failed to create student, it cleans up the data
+      // and returns empty struct slist_stud.
+      free_slist_items(&head);
+      goto ret;
+    }
 
     SLIST_INSERT_HEAD(&head, s, classmates);
 
@@ -106,15 +120,6 @@ void print_slist(struct slist_stud *snames) {
   printf("\n");
 }
 
-void free_slist_items(struct slist_stud *head) {
-  while (!SLIST_EMPTY(head)) {
-    struct student *s = SLIST_FIRST(head);
-    SLIST_REMOVE_HEAD(head, classmates);
-    free(s->name);
-    free(s);
-  }
-}
-
 // tree.h integration
 
 struct node {
@@ -135,19 +140,31 @@ RB_HEAD(studtree, node);
 RB_PROTOTYPE(studtree, node, entry, studcmp);
 RB_GENERATE(studtree, node, entry, studcmp);
 
+void free_tree_nodes(struct studtree *stree) {
+  struct node *n, *np;
+
+  RB_FOREACH_SAFE(n, studtree, stree, np) {
+    RB_REMOVE(studtree, stree, n);
+    free(n);
+  }
+}
+
 struct studtree instantiate_tree(struct slist_stud *snames) {
   struct studtree head = RB_INITIALIZER(root);
 
   struct node *n;
   struct student *s;
   SLIST_FOREACH(s, snames, classmates) {
-    if ((n = malloc(sizeof(struct node))) == NULL)
-      return head;
+    if ((n = malloc(sizeof(struct node))) == NULL) {
+      free_tree_nodes(&head);
+      goto ret;
+    }
 
     n->s = s;
     RB_INSERT(studtree, &head, n);
   }
 
+ret:
   return head;
 }
 
@@ -167,15 +184,6 @@ void traverse(struct studtree *stree) {
   RB_FOREACH(n, studtree, stree) { print_stud(n->s); }
 
   printf("\n");
-}
-
-void free_tree_nodes(struct studtree *stree) {
-  struct node *n, *np;
-
-  RB_FOREACH_SAFE(n, studtree, stree, np) {
-    RB_REMOVE(studtree, stree, n);
-    free(n);
-  }
 }
 
 int main(int argc, char *argv[]) {
