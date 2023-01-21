@@ -12,6 +12,9 @@ src/test.c
 # IDE
 Session.vim
 
+# ClangD
+.cache
+
 # Archives
 **/*.zip
 **/*.tgz
