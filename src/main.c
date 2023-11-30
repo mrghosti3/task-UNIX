@@ -43,8 +43,9 @@ struct student new_student(char *name, size_t len) {
 struct student *stud_from_text(char *buff, size_t i, size_t off) {
   size_t len = i - off;
   char *name = malloc(len);
-  if (name == NULL)
+  if (name == NULL) {
     return NULL;
+  }
 
   memcpy(name, buff + off, len);
   name[len - 1] = 0; // makes sure that string ends with '\0'
@@ -64,25 +65,29 @@ struct slist_stud instantiate_slist(const char *fname) {
 
   int fd = open(fname, O_RDONLY);
 
-  if (fd < 0)
+  if (fd < 0) {
     goto ret;
+  }
 
   struct stat fst;
 
-  if (fstat(fd, &fst))
+  if (fstat(fd, &fst)) {
     goto ret;
+  }
 
   char *buff = mmap(NULL, fst.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
-  if (buff == MAP_FAILED)
+  if (buff == MAP_FAILED) {
     goto ret;
+  }
 
   SLIST_INIT(&head);
 
   size_t off = 0;
 
   for (size_t i = 0; i < fst.st_size; ++i) {
-    if (buff[i] != '\n')
+    if (buff[i] != '\n') {
       continue;
+    }
 
     struct student *s = stud_from_text(buff, ++i, off);
 
@@ -188,14 +193,16 @@ void traverse(struct studtree *stree) {
 
 int main(int argc, char *argv[]) {
   // checks if input filename is provided
-  if (argc > 2)
+  if (argc > 2) {
     return -1;
+  }
 
   // SLIST creation
   struct slist_stud snames = instantiate_slist(argv[1]);
 
-  if (SLIST_EMPTY(&snames))
+  if (SLIST_EMPTY(&snames)) {
     _exit(EXIT_FAILURE);
+  }
 
   // SLIST test
   print_slist(&snames);
