@@ -6,7 +6,7 @@ BARG=name.txt
 
 all: $(BIN)
 
-$(BIN): src/main.c
+$(BIN): src/main.c src/student.c
 	$(CC) $(CFLAGS) -o $@ $^
 
 run: $(BIN)
