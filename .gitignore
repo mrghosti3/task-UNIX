@@ -4,7 +4,7 @@ bin
 
 # external
 src/libs
-src/test.c
+tests/test.c
 
 # testdata
 **/*.txt
