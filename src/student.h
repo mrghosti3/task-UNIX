@@ -13,7 +13,7 @@
 struct student {
   char *name;
   size_t nlen;
-  XXH64_hash_t h1;
+  XXH64_hash_t hash;
   SLIST_ENTRY(student) classmates;
 };
 

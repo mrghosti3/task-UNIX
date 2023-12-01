@@ -17,8 +17,8 @@ void free_slist_items(struct slist_stud *head) {
 }
 
 struct student new_student(char *name, size_t len) {
-  XXH64_hash_t h1 = XXH64(name, len, 0);
-  struct student s = {name, len, h1, {NULL}};
+  XXH64_hash_t hash = XXH64(name, len, 0);
+  struct student s = {name, len, hash, {NULL}};
   return s;
 }
 
@@ -87,7 +87,7 @@ ret:
 }
 
 void print_stud(struct student *s) {
-  printf("Student: h1 '%lx' len %zu '%s' \n", s->h1, s->nlen, s->name);
+  printf("Student: hash '%lx' len %zu '%s' \n", s->hash, s->nlen, s->name);
 }
 
 void print_slist(struct slist_stud *snames) {

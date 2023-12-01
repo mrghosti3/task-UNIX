@@ -18,8 +18,8 @@ struct node *init_node(struct student *stud) {
 }
 
 int nodecmp(struct node *n1, struct node *n2) {
-  XXH64_hash_t h1 = SLIST_FIRST(&n1->slist)->h1;
-  XXH64_hash_t h2 = SLIST_FIRST(&n2->slist)->h1;
+  XXH64_hash_t h1 = SLIST_FIRST(&n1->slist)->hash;
+  XXH64_hash_t h2 = SLIST_FIRST(&n2->slist)->hash;
 
   return h1 < h2 ? -1 : h1 > h2;
 }
