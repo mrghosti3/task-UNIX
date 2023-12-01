@@ -5,6 +5,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "libs/queue.h"
+
 void free_slist_items(struct slist_stud *head) {
   while (!SLIST_EMPTY(head)) {
     struct student *s = SLIST_FIRST(head);

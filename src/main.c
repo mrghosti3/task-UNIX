@@ -1,74 +1,11 @@
 #include <unistd.h>
 
 // queue.h Integrations
+#include "libs/queue.h"
 #include "student.h"
 
 // tree.h integration
-#include <stdio.h>
-#include "libs/tree.h"
-struct node {
-  RB_ENTRY(node) entry;
-  struct student *s;
-};
-
-int studcmp(struct node *n1, struct node *n2) {
-  struct student *s1 = n1->s, *s2 = n2->s;
-
-  if (s1->h1 != s2->h1)
-    return s1->h1 < s2->h1 ? -1 : 1;
-
-  return (s1->h2 < s2->h2 ? -1 : s1->h2 > s2->h2);
-}
-
-RB_HEAD(studtree, node);
-RB_PROTOTYPE(studtree, node, entry, studcmp);
-RB_GENERATE(studtree, node, entry, studcmp);
-
-void free_tree_nodes(struct studtree *stree) {
-  struct node *n, *np;
-
-  RB_FOREACH_SAFE(n, studtree, stree, np) {
-    RB_REMOVE(studtree, stree, n);
-    free(n);
-  }
-}
-
-struct studtree instantiate_tree(struct slist_stud *snames) {
-  struct studtree head = RB_INITIALIZER(root);
-
-  struct node *n;
-  struct student *s;
-  SLIST_FOREACH(s, snames, classmates) {
-    if ((n = malloc(sizeof(struct node))) == NULL) {
-      free_tree_nodes(&head);
-      goto ret;
-    }
-
-    n->s = s;
-    RB_INSERT(studtree, &head, n);
-  }
-
-ret:
-  return head;
-}
-
-struct node *search(struct studtree *stree, struct student *s) {
-  struct node lookup = {{NULL}, s};
-
-  return RB_FIND(studtree, stree, &lookup);
-}
-
-struct node *delete(struct studtree *stree, struct node *n) {
-  return RB_REMOVE(studtree, stree, n);
-}
-
-// FIX: implement tree pretty print
-void traverse(struct studtree *stree) {
-  struct node *n;
-  RB_FOREACH(n, studtree, stree) { print_stud(n->s); }
-
-  printf("\n");
-}
+#include "student_tree.h"
 
 int main(int argc, char *argv[]) {
   // checks if input filename is provided
@@ -89,7 +26,7 @@ int main(int argc, char *argv[]) {
   // tree creation
   struct studtree stree = instantiate_tree(&snames);
 
-  if (RB_EMPTY(&stree)) {
+  if (RB_EMPTY(&stree) && !SLIST_EMPTY(&snames)) {
     free_slist_items(&snames);
     _exit(EXIT_FAILURE);
   }
@@ -103,7 +40,6 @@ int main(int argc, char *argv[]) {
   free(n);
   traverse(&stree);
 
-  free_slist_items(&snames);
   free_tree_nodes(&stree);
   return 0;
 }
